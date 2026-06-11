@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WeLearn — {{ group.name }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Nunito', sans-serif; background: #f5f3ff; display: flex; min-height: 100vh; }
+    .sidebar { width: 220px; min-width: 220px; background: #534AB7; display: flex; flex-direction: column; position: fixed; height: 100vh; overflow-y: auto; }
+    .logo { padding: 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.15); }
+    .logo-text { color: #fff; font-size: 22px; font-weight: 800; }
+    .logo-sub { color: rgba(255,255,255,0.6); font-size: 11px; margin-top: 2px; }
+    .section-label { padding: 16px 16px 6px; color: rgba(255,255,255,0.5); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+    .group-btn { display: flex; align-items: center; gap: 10px; padding: 10px 14px; margin: 2px 8px; border-radius: 8px; cursor: pointer; color: rgba(255,255,255,0.85); font-size: 14px; text-decoration: none; transition: background 0.15s; }
+    .group-btn:hover { background: rgba(255,255,255,0.12); }
+    .group-btn.active { background: rgba(255,255,255,0.2); color: #fff; font-weight: 700; }
+    .group-icon { width: 28px; height: 28px; border-radius: 6px; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0; }
+    .add-group-btn { margin: 8px; padding: 8px; border-radius: 8px; border: 1px dashed rgba(255,255,255,0.3); color: rgba(255,255,255,0.6); font-size: 13px; cursor: pointer; text-align: center; background: none; font-family: 'Nunito', sans-serif; width: calc(100% - 16px); }
+    .sidebar-bottom { margin-top: auto; padding: 16px; border-top: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: space-between; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; font-weight: 700; }
+    .teacher-name { color: rgba(255,255,255,0.9); font-size: 13px; font-weight: 600; }
+    .logout-btn { color: rgba(255,255,255,0.5); font-size: 13px; text-decoration: none; }
+    .main { margin-left: 220px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+    .topbar { background: #fff; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #EEEDFE; position: sticky; top: 0; z-index: 10; }
+    .group-title { font-size: 18px; font-weight: 800; color: #3C3489; }
+    .topbar-actions { display: flex; gap: 8px; align-items: center; }
+    .month-sel { padding: 6px 12px; border-radius: 8px; border: 1px solid #CECBF6; font-size: 13px; color: #534AB7; background: #EEEDFE; font-family: 'Nunito', sans-serif; cursor: pointer; }
+    .btn-purple { background: #534AB7; color: #fff; border: none; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'Nunito', sans-serif; }
+    .btn-outline { background: #fff; color: #534AB7; border: 1px solid #CECBF6; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'Nunito', sans-serif; }
+    .tabs { background: #fff; display: flex; padding: 0 24px; border-bottom: 1px solid #EEEDFE; }
+    .tab { padding: 10px 18px; font-size: 14px; cursor: pointer; color: #888; border-bottom: 2px solid transparent; font-weight: 600; text-decoration: none; }
+    .tab.active { color: #534AB7; border-bottom: 2px solid #534AB7; }
+    .content { padding: 20px 24px; flex: 1; }
+    .search-bar { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #EEEDFE; border-radius: 10px; padding: 8px 14px; margin-bottom: 16px; max-width: 300px; }
+    .search-bar input { border: none; outline: none; font-size: 14px; font-family: 'Nunito', sans-serif; background: transparent; color: #333; width: 100%; }
+    .table-wrap { background: #fff; border-radius: 12px; border: 1px solid #EEEDFE; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: #EEEDFE; color: #3C3489; font-weight: 700; padding: 10px 8px; text-align: center; border-bottom: 1px solid #CECBF6; white-space: nowrap; position: sticky; top: 0; }
+    th.name-col { text-align: left; padding-left: 16px; min-width: 160px; }
+    td { padding: 8px 6px; text-align: center; border-bottom: 1px solid #f5f3ff; }
+    td.name-cell { text-align: left; padding-left: 16px; font-weight: 700; color: #3C3489; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #faf9ff; }
+    .grade-cell { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .grade-input { width: 38px; border: 1px solid #CECBF6; border-radius: 6px; text-align: center; padding: 4px 2px; font-size: 13px; color: #534AB7; background: #EEEDFE; font-family: 'Nunito', sans-serif; font-weight: 700; }
+    .grade-input:focus { outline: none; border-color: #534AB7; background: #fff; }
+    .test-score-wrap { display: flex; align-items: center; gap: 3px; }
+    .test-input { width: 40px; border: 1px solid #AFA9EC; border-radius: 6px; text-align: center; padding: 4px 2px; font-size: 13px; color: #3C3489; background: #f0eeff; font-family: 'Nunito', sans-serif; font-weight: 700; }
+    .test-input:focus { outline: none; border-color: #534AB7; background: #fff; }
+    .test-max { font-size: 11px; color: #AFA9EC; font-weight: 700; }
+    .comment-icon { font-size: 11px; cursor: pointer; opacity: 0.25; line-height: 1; }
+    .comment-icon:hover { opacity: 0.7; }
+    .comment-icon.has-comment { opacity: 1; }
+    .absent-btn { background: #FCEBEB; color: #A32D2D; border: none; border-radius: 4px; font-size: 11px; font-weight: 700; padding: 3px 6px; cursor: pointer; font-family: 'Nunito', sans-serif; }
+    .avg-cell { background: #EEEDFE; font-weight: 800; color: #3C3489; font-size: 14px; }
+    .col-header { cursor: pointer; }
+    .col-header:hover { background: #e0deff; }
+    .add-col-th { background: #EEEDFE; cursor: pointer; color: #534AB7; font-size: 18px; }
+    .add-col-th:hover { background: #d8d4ff; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
+    .modal.show { display: flex; }
+    .modal-card { background: #fff; border-radius: 16px; padding: 32px; width: 100%; max-width: 380px; }
+    .modal-card h3 { font-size: 18px; font-weight: 700; color: #3C3489; margin-bottom: 20px; }
+    .modal-card input, .modal-card textarea { width: 100%; padding: 10px 14px; border: 2px solid #EEEDFE; border-radius: 8px; font-size: 14px; font-family: 'Nunito', sans-serif; outline: none; margin-bottom: 12px; }
+    .modal-card input:focus, .modal-card textarea:focus { border-color: #534AB7; }
+    .modal-card textarea { resize: vertical; }
+    .modal-actions { display: flex; gap: 8px; margin-top: 8px; }
+    .btn-primary { flex: 1; padding: 10px; background: #534AB7; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; font-family: 'Nunito', sans-serif; cursor: pointer; }
+    .btn-secondary { flex: 1; padding: 10px; background: #f5f3ff; color: #534AB7; border: 1px solid #CECBF6; border-radius: 8px; font-size: 14px; font-weight: 700; font-family: 'Nunito', sans-serif; cursor: pointer; }
+    .btn-danger { flex: 1; padding: 10px; background: #FCEBEB; color: #A32D2D; border: 1px solid #F7C1C1; border-radius: 8px; font-size: 14px; font-weight: 700; font-family: 'Nunito', sans-serif; cursor: pointer; }
+    .name-cell-wrap { display: flex; align-items: center; gap: 6px; }
+    .edit-btn { background: none; border: none; color: #AFA9EC; cursor: pointer; font-size: 14px; padding: 2px; }
+    .edit-btn:hover { color: #534AB7; }
+    .saved-indicator { position: fixed; bottom: 20px; right: 20px; background: #534AB7; color: #fff; padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 700; display: none; z-index: 200; }
+    .checkbox-label { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #534AB7; font-weight: 600; margin-bottom: 4px; cursor: pointer; }
+    .checkbox-label input[type="checkbox"] { width: auto; margin: 0; }
+    .field-label { display: block; font-size: 12px; color: #888; margin-bottom: 4px; font-weight: 600; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-text">WeLearn</div>
+      <div class="logo-sub">Система оцінювання</div>
+    </div>
+    <div class="section-label">Групи</div>
+    {% for g in groups %}
+    <a href="/group/{{ g.id }}" class="group-btn {% if g.id == group.id %}active{% endif %}">
+      <div class="group-icon">{{ g.name[:2] }}</div>
+      {{ g.name }}
+    </a>
+    {% endfor %}
+    <button class="add-group-btn" onclick="document.getElementById('addGroupModal').classList.add('show')">+ Додати групу</button>
+    <div class="sidebar-bottom">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="avatar">{{ user[:2].upper() }}</div>
+        <div class="teacher-name">{{ user }}</div>
+      </div>
+      <a href="/logout" class="logout-btn">Вийти</a>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="group-title">{{ group.name }} — {{ students|length }} учнів</div>
+      <div class="topbar-actions">
+        <select class="month-sel" onchange="window.location='/group/{{ group.id }}?month='+this.value" id="monthSel">
+          {% for m in ['2026-09','2026-08','2026-07','2026-06','2026-05','2026-04','2026-03','2026-02','2026-01'] %}
+          <option value="{{ m }}" {% if m == month %}selected{% endif %}>
+            {{ {'01':'Січень','02':'Лютий','03':'Березень','04':'Квітень','05':'Травень','06':'Червень','07':'Липень','08':'Серпень','09':'Вересень','10':'Жовтень','11':'Листопад','12':'Грудень'}[m.split('-')[1]] }} {{ m.split('-')[0] }}
+          </option>
+          {% endfor %}
+        </select>
+        <button class="btn-outline" onclick="document.getElementById('addStudentModal').classList.add('show')">+ Учень</button>
+        <button class="btn-outline" onclick="document.getElementById('renameGroupModal').classList.add('show')">✏️ Групу</button>
+        <button class="btn-danger-sm" onclick="confirmDeleteGroup()">🗑️</button>
+      </div>
+    </div>
+    <div class="tabs">
+      <a href="/group/{{ group.id }}?month={{ month }}" class="tab active">Журнал оцінок</a>
+      <a href="/rating/{{ group.id }}?month={{ month }}" class="tab">Рейтинг</a>
+      <a href="/progress/{{ group.id }}" class="tab">Прогрес</a>
+    </div>
+    <div class="content">
+      <div class="search-bar">
+        <span>🔍</span>
+        <input type="text" id="searchInput" placeholder="Пошук учня..." oninput="filterStudents()">
+      </div>
+      <p style="font-size:12px;color:#888;margin-bottom:10px">💡 Двічі клікни на назву колонки щоб перейменувати або (для тестів) змінити максимальний бал</p>
+      <div class="table-wrap">
+        <table id="gradesTable">
+          <thead>
+            <tr>
+              <th class="name-col">Учень</th>
+              {% for col in columns %}
+              <th class="col-header" ondblclick="openRenameCol('{{ col.id }}', '{{ col.name }}', '{{ col.type }}', {{ col.max_score or 100 }})">
+                {{ col.name }}
+                {% if col.type == 'test' %}<br><span style="font-weight:400;font-size:10px">/{{ col.max_score or 100 }}</span>{% endif %}
+              </th>
+              {% endfor %}
+              <th class="add-col-th" onclick="document.getElementById('addColModal').classList.add('show')">+</th>
+              <th class="avg-cell">Середнє</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for student in students %}
+            {% set sg = grades.get(student.id, {}).get('scores', {}) %}
+            <tr data-name="{{ student.name.lower() }}">
+              <td class="name-cell">
+                <div class="name-cell-wrap">
+                  {{ student.name }}
+                  <button class="edit-btn" onclick="openRenameStudent('{{ student.id }}', '{{ student.name }}')">✏️</button>
+                </div>
+              </td>
+              {% for col in columns %}
+              {% set val = sg.get(col.id, {}).get('value', '') %}
+              {% set cmt = sg.get(col.id, {}).get('comment', '') %}
+              <td>
+                <div class="grade-cell">
+                  {% if col.type == 'test' %}
+                  <div class="test-score-wrap">
+                    <input class="test-input" type="text" value="{{ val }}"
+                      onchange="saveGrade('{{ group.id }}','{{ student.id }}','{{ month }}','{{ col.id }}',this.value)"
+                      data-student="{{ student.id }}" data-col="{{ col.id }}">
+                    <span class="test-max">/{{ col.max_score or 100 }}</span>
+                  </div>
+                  {% else %}
+                  <input class="grade-input" type="text" value="{{ val }}"
+                    onchange="saveGrade('{{ group.id }}','{{ student.id }}','{{ month }}','{{ col.id }}',this.value)"
+                    data-student="{{ student.id }}" data-col="{{ col.id }}">
+                  {% endif %}
+                  <span class="comment-icon {% if cmt %}has-comment{% endif %}"
+                    onclick="openComment('{{ student.id }}','{{ col.id }}','{{ student.name }}','{{ col.name }}')"
+                    title="Коментар">💬</span>
+                </div>
+              </td>
+              {% endfor %}
+              <td class="add-col-th"></td>
+              <td class="avg-cell" id="avg-{{ student.id }}">—</td>
+              <td>
+                <button class="edit-btn" onclick="confirmDeleteStudent('{{ student.id }}','{{ student.name }}')">🗑️</button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="saved-indicator" id="savedIndicator">✓ Збережено</div>
+
+  <div class="modal" id="addStudentModal">
+    <div class="modal-card">
+      <h3>Додати учня</h3>
+      <form method="POST" action="/add_student">
+        <input type="hidden" name="group_id" value="{{ group.id }}">
+        <input type="text" name="name" placeholder="Ім'я учня" required>
+        <input type="text" name="parent_code" placeholder="Код для батьків (наприклад: ABC123)" required>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="document.getElementById('addStudentModal').classList.remove('show')">Скасувати</button>
+          <button type="submit" class="btn-primary">Додати</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="addGroupModal">
+    <div class="modal-card">
+      <h3>Додати групу</h3>
+      <form method="POST" action="/add_group">
+        <input type="text" name="name" placeholder="Назва групи" required>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="document.getElementById('addGroupModal').classList.remove('show')">Скасувати</button>
+          <button type="submit" class="btn-primary">Додати</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="renameGroupModal">
+    <div class="modal-card">
+      <h3>Перейменувати групу</h3>
+      <input type="text" id="renameGroupInput" value="{{ group.name }}">
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="document.getElementById('renameGroupModal').classList.remove('show')">Скасувати</button>
+        <button class="btn-primary" onclick="renameGroup('{{ group.id }}')">Зберегти</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="renameStudentModal">
+    <div class="modal-card">
+      <h3>Перейменувати учня</h3>
+      <input type="text" id="renameStudentInput">
+      <input type="hidden" id="renameStudentId">
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="document.getElementById('renameStudentModal').classList.remove('show')">Скасувати</button>
+        <button class="btn-primary" onclick="renameStudent('{{ group.id }}')">Зберегти</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="deleteStudentModal">
+    <div class="modal-card">
+      <h3>Видалити учня?</h3>
+      <p style="color:#666;margin-bottom:20px" id="deleteStudentName"></p>
+      <input type="hidden" id="deleteStudentId">
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="document.getElementById('deleteStudentModal').classList.remove('show')">Скасувати</button>
+        <button class="btn-danger" onclick="deleteStudent('{{ group.id }}')">Видалити</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="addColModal">
+    <div class="modal-card">
+      <h3>Додати колонку</h3>
+      <input type="text" id="newColName" placeholder="Назва (наприклад: Додатковий тест)">
+      <label class="checkbox-label">
+        <input type="checkbox" id="newColIsTest" onchange="document.getElementById('newColMaxWrap').style.display = this.checked ? 'block' : 'none'">
+        Це тест (результат у балах)
+      </label>
+      <div id="newColMaxWrap" style="display:none">
+        <span class="field-label">Максимальний бал тесту</span>
+        <input type="number" id="newColMaxScore" placeholder="Наприклад 56" value="100">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="document.getElementById('addColModal').classList.remove('show')">Скасувати</button>
+        <button class="btn-primary" onclick="addColumn()">Додати</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="renameColModal">
+    <div class="modal-card">
+      <h3>Редагувати колонку</h3>
+      <input type="text" id="renameColInput" placeholder="Назва">
+      <div id="renameMaxWrap" style="display:none">
+        <span class="field-label">Максимальний бал тесту</span>
+        <input type="number" id="renameColMaxScore" placeholder="Наприклад 56">
+      </div>
+      <input type="hidden" id="renameColId">
+      <input type="hidden" id="renameColType">
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="document.getElementById('renameColModal').classList.remove('show')">Скасувати</button>
+        <button class="btn-primary" onclick="renameColumn()">Зберегти</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="commentModal">
+    <div class="modal-card">
+      <h3 id="commentTitle">Коментар</h3>
+      <textarea id="commentInput" rows="3" placeholder="Напишіть коментар, який побачать батьки..."></textarea>
+      <input type="hidden" id="commentStudentId">
+      <input type="hidden" id="commentColId">
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="document.getElementById('commentModal').classList.remove('show')">Скасувати</button>
+        <button class="btn-primary" onclick="saveComment()">Зберегти</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const groupId = "{{ group.id }}";
+    const month = "{{ month }}";
+    const gradesData = {{ grades | tojson }};
+    const columnsData = {{ columns | tojson }};
+
+    function showSaved() {
+      const el = document.getElementById('savedIndicator');
+      el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 2000);
+    }
+
+    function calcAvg(studentId) {
+      const scores = gradesData[studentId]?.scores || {};
+      let lessonScores = [];
+      let testConverted = [];
+      columnsData.forEach(col => {
+        const val = scores[col.id]?.value || '';
+        if (val && val !== 'нб') {
+          const num = parseFloat(val);
+          if (!isNaN(num)) {
+            if (col.type === 'test') {
+              const maxScore = col.max_score || 100;
+              testConverted.push(num / maxScore * 12);
+            } else {
+              lessonScores.push(num);
+            }
+          }
+        }
+      });
+      const all = [...lessonScores, ...testConverted];
+      return all.length ? Math.round(all.reduce((a,b) => a+b, 0) / all.length * 10) / 10 : null;
+    }
+
+    function updateAllAvgs() {
+      {% for student in students %}
+      const avg{{ loop.index }} = calcAvg("{{ student.id }}");
+      document.getElementById('avg-{{ student.id }}').textContent = avg{{ loop.index }} !== null ? avg{{ loop.index }} : '—';
+      {% endfor %}
+    }
+
+    async function saveGrade(groupId, studentId, month, colId, value, comment) {
+      if (!gradesData[studentId]) gradesData[studentId] = {scores: {}};
+      if (!gradesData[studentId].scores) gradesData[studentId].scores = {};
+      if (comment === undefined) {
+        comment = (gradesData[studentId].scores[colId] && gradesData[studentId].scores[colId].comment) || '';
+      }
+      gradesData[studentId].scores[colId] = {value: value, comment: comment};
+      await fetch('/save_grade', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({group_id: groupId, student_id: studentId, month: month, column_id: colId, value: value, comment: comment})
+      });
+      updateAllAvgs();
+      showSaved();
+    }
+
+    function openComment(studentId, colId, studentName, colName) {
+      const current = (gradesData[studentId] && gradesData[studentId].scores && gradesData[studentId].scores[colId]) || {};
+      document.getElementById('commentStudentId').value = studentId;
+      document.getElementById('commentColId').value = colId;
+      document.getElementById('commentTitle').textContent = studentName + ' — ' + colName;
+      document.getElementById('commentInput').value = current.comment || '';
+      document.getElementById('commentModal').classList.add('show');
+    }
+
+    function saveComment() {
+      const studentId = document.getElementById('commentStudentId').value;
+      const colId = document.getElementById('commentColId').value;
+      const comment = document.getElementById('commentInput').value;
+      const current = (gradesData[studentId] && gradesData[studentId].scores && gradesData[studentId].scores[colId]) || {};
+      const value = current.value || '';
+      saveGrade(groupId, studentId, month, colId, value, comment);
+      document.getElementById('commentModal').classList.remove('show');
+      const input = document.querySelector('[data-student="'+studentId+'"][data-col="'+colId+'"]');
+      const icon = input.closest('.grade-cell').querySelector('.comment-icon');
+      if (comment) icon.classList.add('has-comment');
+      else icon.classList.remove('has-comment');
+    }
+
+    function filterStudents() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      document.querySelectorAll('#gradesTable tbody tr').forEach(row => {
+        row.style.display = row.dataset.name.includes(q) ? '' : 'none';
+      });
+    }
+
+    function renameGroup(groupId) {
+      const name = document.getElementById('renameGroupInput').value;
+      fetch('/rename_group', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({group_id: groupId, name: name})})
+        .then(() => location.reload());
+    }
+
+    function openRenameStudent(id, name) {
+      document.getElementById('renameStudentId').value = id;
+      document.getElementById('renameStudentInput').value = name;
+      document.getElementById('renameStudentModal').classList.add('show');
+    }
+
+    function renameStudent(groupId) {
+      const id = document.getElementById('renameStudentId').value;
+      const name = document.getElementById('renameStudentInput').value;
+      fetch('/rename_student', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({group_id: groupId, student_id: id, name: name})})
+        .then(() => location.reload());
+    }
+
+    function confirmDeleteStudent(id, name) {
+      document.getElementById('deleteStudentId').value = id;
+      document.getElementById('deleteStudentName').textContent = 'Видалити учня: ' + name + '?';
+      document.getElementById('deleteStudentModal').classList.add('show');
+    }
+
+    function deleteStudent(groupId) {
+      const id = document.getElementById('deleteStudentId').value;
+      fetch('/delete_student', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({group_id: groupId, student_id: id})})
+        .then(() => location.reload());
+    }
+
+    function confirmDeleteGroup() {
+      if (confirm('Ви впевнені що хочете видалити групу "{{ group.name }}"? Всі дані будуть втрачені!')) {
+        fetch('/delete_group', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({group_id: "{{ group.id }}"})})
+          .then(() => window.location='/dashboard');
+      }
+    }
+
+    function addColumn() {
+      const name = document.getElementById('newColName').value;
+      const isTest = document.getElementById('newColIsTest').checked;
+      const body = {group_id: groupId, month: month, name: name, order: columnsData.length + 1};
+      if (isTest) {
+        body.col_type = 'test';
+        body.max_score = parseFloat(document.getElementById('newColMaxScore').value) || 100;
+      }
+      fetch('/add_column', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)})
+        .then(() => location.reload());
+    }
+
+    function openRenameCol(id, name, type, maxScore) {
+      document.getElementById('renameColId').value = id;
+      document.getElementById('renameColInput').value = name;
+      document.getElementById('renameColType').value = type;
+      const maxWrap = document.getElementById('renameMaxWrap');
+      if (type === 'test') {
+        maxWrap.style.display = 'block';
+        document.getElementById('renameColMaxScore').value = maxScore;
+      } else {
+        maxWrap.style.display = 'none';
+      }
+      document.getElementById('renameColModal').classList.add('show');
+    }
+
+    function renameColumn() {
+      const id = document.getElementById('renameColId').value;
+      const name = document.getElementById('renameColInput').value;
+      const type = document.getElementById('renameColType').value;
+      const body = {column_id: id, name: name};
+      if (type === 'test') {
+        body.max_score = parseFloat(document.getElementById('renameColMaxScore').value) || 100;
+      }
+      fetch('/rename_column', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)})
+        .then(() => location.reload());
+    }
+
+    updateAllAvgs();
+  </script>
+</body>
+</html>

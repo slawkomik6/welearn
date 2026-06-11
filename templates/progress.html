@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WeLearn — Прогрес</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Nunito', sans-serif; background: #f5f3ff; display: flex; min-height: 100vh; }
+    .sidebar { width: 220px; min-width: 220px; background: #534AB7; display: flex; flex-direction: column; position: fixed; height: 100vh; overflow-y: auto; }
+    .logo { padding: 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.15); }
+    .logo-text { color: #fff; font-size: 22px; font-weight: 800; }
+    .logo-sub { color: rgba(255,255,255,0.6); font-size: 11px; margin-top: 2px; }
+    .section-label { padding: 16px 16px 6px; color: rgba(255,255,255,0.5); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+    .group-btn { display: flex; align-items: center; gap: 10px; padding: 10px 14px; margin: 2px 8px; border-radius: 8px; cursor: pointer; color: rgba(255,255,255,0.85); font-size: 14px; text-decoration: none; transition: background 0.15s; }
+    .group-btn:hover { background: rgba(255,255,255,0.12); }
+    .group-btn.active { background: rgba(255,255,255,0.2); color: #fff; font-weight: 700; }
+    .group-icon { width: 28px; height: 28px; border-radius: 6px; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0; }
+    .sidebar-bottom { margin-top: auto; padding: 16px; border-top: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: space-between; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; font-weight: 700; }
+    .teacher-name { color: rgba(255,255,255,0.9); font-size: 13px; font-weight: 600; }
+    .logout-btn { color: rgba(255,255,255,0.5); font-size: 13px; text-decoration: none; }
+    .main { margin-left: 220px; flex: 1; display: flex; flex-direction: column; }
+    .topbar { background: #fff; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #EEEDFE; flex-wrap: wrap; gap: 10px; }
+    .group-title { font-size: 18px; font-weight: 800; color: #3C3489; }
+    .student-sel { padding: 6px 12px; border-radius: 8px; border: 1px solid #CECBF6; font-size: 13px; color: #534AB7; background: #EEEDFE; font-family: 'Nunito', sans-serif; cursor: pointer; }
+    .tabs { background: #fff; display: flex; padding: 0 24px; border-bottom: 1px solid #EEEDFE; }
+    .tab { padding: 10px 18px; font-size: 14px; cursor: pointer; color: #888; border-bottom: 2px solid transparent; font-weight: 600; text-decoration: none; }
+    .tab.active { color: #534AB7; border-bottom: 2px solid #534AB7; }
+    .content { padding: 24px; flex: 1; }
+    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+    .stat-card { background: #fff; border-radius: 12px; border: 1px solid #EEEDFE; padding: 16px 20px; }
+    .stat-label { font-size: 12px; color: #888; font-weight: 600; margin-bottom: 6px; }
+    .stat-value { font-size: 24px; font-weight: 800; color: #3C3489; }
+    .stat-value.up { color: #3B6D11; }
+    .stat-value.down { color: #A32D2D; }
+    .chart-card { background: #fff; border-radius: 12px; border: 1px solid #EEEDFE; padding: 24px; }
+    .chart-card h3 { font-size: 15px; font-weight: 700; color: #534AB7; margin-bottom: 16px; }
+    .no-data { text-align: center; color: #888; padding: 60px 20px; }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-text">WeLearn</div>
+      <div class="logo-sub">Система оцінювання</div>
+    </div>
+    <div class="section-label">Групи</div>
+    {% for g in groups %}
+    <a href="/progress/{{ g.id }}" class="group-btn {% if g.id == group.id %}active{% endif %}">
+      <div class="group-icon">{{ g.name[:2] }}</div>
+      {{ g.name }}
+    </a>
+    {% endfor %}
+    <div class="sidebar-bottom">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="avatar">{{ user[:2].upper() }}</div>
+        <div class="teacher-name">{{ user }}</div>
+      </div>
+      <a href="/logout" class="logout-btn">Вийти</a>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="group-title">Прогрес — {{ group.name }}</div>
+      <select class="student-sel" onchange="window.location='/progress/{{ group.id }}?student_id='+this.value">
+        {% for s in students %}
+        <option value="{{ s.id }}" {% if s.id == selected_id %}selected{% endif %}>{{ s.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="tabs">
+      <a href="/group/{{ group.id }}" class="tab">Журнал оцінок</a>
+      <a href="/rating/{{ group.id }}" class="tab">Рейтинг</a>
+      <a href="/progress/{{ group.id }}?student_id={{ selected_id }}" class="tab active">Прогрес</a>
+    </div>
+    <div class="content">
+      {% if progress and progress|length > 0 %}
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Поточний середній бал</div>
+          <div class="stat-value" id="currentAvg">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Зміна за місяць</div>
+          <div class="stat-value" id="trendValue">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Найкращий місяць</div>
+          <div class="stat-value" id="bestMonth">—</div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>Динаміка середнього балу (12-бальна шкала)</h3>
+        <canvas id="progressChart" height="90"></canvas>
+      </div>
+      {% else %}
+      <div class="chart-card">
+        <div class="no-data">Ще немає даних для побудови графіка.<br>Додайте оцінки за кілька місяців щоб побачити динаміку.</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <script>
+    const progressData = {{ progress | tojson }};
+
+    if (progressData && progressData.length > 0) {
+      const labels = progressData.map(p => p.label);
+      const values = progressData.map(p => p.avg);
+
+      document.getElementById('currentAvg').textContent = values[values.length - 1];
+
+      if (values.length > 1) {
+        const diff = Math.round((values[values.length - 1] - values[values.length - 2]) * 10) / 10;
+        const trendEl = document.getElementById('trendValue');
+        if (diff > 0) {
+          trendEl.textContent = '+' + diff;
+          trendEl.classList.add('up');
+        } else if (diff < 0) {
+          trendEl.textContent = diff;
+          trendEl.classList.add('down');
+        } else {
+          trendEl.textContent = '0';
+        }
+      } else {
+        document.getElementById('trendValue').textContent = '—';
+      }
+
+      const maxVal = Math.max(...values);
+      const maxIdx = values.indexOf(maxVal);
+      document.getElementById('bestMonth').textContent = labels[maxIdx] + ' (' + maxVal + ')';
+
+      const ctx = document.getElementById('progressChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Середній бал',
+            data: values,
+            borderColor: '#534AB7',
+            backgroundColor: 'rgba(83,74,183,0.1)',
+            borderWidth: 3,
+            tension: 0.3,
+            fill: true,
+            pointBackgroundColor: '#534AB7',
+            pointRadius: 5,
+            pointHoverRadius: 7
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              min: 0,
+              max: 12,
+              ticks: { stepSize: 2 }
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>

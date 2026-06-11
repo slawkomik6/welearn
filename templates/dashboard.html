@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WeLearn — Журнал</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Nunito', sans-serif; background: #f5f3ff; display: flex; min-height: 100vh; }
+    .sidebar { width: 220px; min-width: 220px; background: #534AB7; display: flex; flex-direction: column; position: fixed; height: 100vh; }
+    .logo { padding: 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.15); }
+    .logo-text { color: #fff; font-size: 22px; font-weight: 800; }
+    .logo-sub { color: rgba(255,255,255,0.6); font-size: 11px; margin-top: 2px; }
+    .section-label { padding: 16px 16px 6px; color: rgba(255,255,255,0.5); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+    .group-btn { display: flex; align-items: center; gap: 10px; padding: 10px 14px; margin: 2px 8px; border-radius: 8px; cursor: pointer; color: rgba(255,255,255,0.85); font-size: 14px; text-decoration: none; transition: background 0.15s; }
+    .group-btn:hover { background: rgba(255,255,255,0.12); }
+    .group-btn.active { background: rgba(255,255,255,0.2); color: #fff; font-weight: 700; }
+    .group-icon { width: 28px; height: 28px; border-radius: 6px; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0; }
+    .add-group-btn { margin: 8px; padding: 8px; border-radius: 8px; border: 1px dashed rgba(255,255,255,0.3); color: rgba(255,255,255,0.6); font-size: 13px; cursor: pointer; text-align: center; background: none; font-family: 'Nunito', sans-serif; width: calc(100% - 16px); }
+    .add-group-btn:hover { background: rgba(255,255,255,0.08); }
+    .sidebar-bottom { margin-top: auto; padding: 16px; border-top: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: space-between; }
+    .teacher-info { display: flex; align-items: center; gap: 8px; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; font-weight: 700; }
+    .teacher-name { color: rgba(255,255,255,0.9); font-size: 13px; font-weight: 600; }
+    .logout-btn { color: rgba(255,255,255,0.5); font-size: 13px; text-decoration: none; }
+    .logout-btn:hover { color: #fff; }
+    .main { margin-left: 220px; flex: 1; display: flex; align-items: center; justify-content: center; }
+    .welcome { text-align: center; }
+    .welcome h1 { font-size: 28px; font-weight: 800; color: #534AB7; margin-bottom: 8px; }
+    .welcome p { color: #888; font-size: 15px; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
+    .modal.show { display: flex; }
+    .modal-card { background: #fff; border-radius: 16px; padding: 32px; width: 100%; max-width: 380px; }
+    .modal-card h3 { font-size: 18px; font-weight: 700; color: #3C3489; margin-bottom: 20px; }
+    .modal-card input { width: 100%; padding: 10px 14px; border: 2px solid #EEEDFE; border-radius: 8px; font-size: 14px; font-family: 'Nunito', sans-serif; outline: none; margin-bottom: 12px; }
+    .modal-card input:focus { border-color: #534AB7; }
+    .modal-actions { display: flex; gap: 8px; margin-top: 8px; }
+    .btn-primary { flex: 1; padding: 10px; background: #534AB7; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; font-family: 'Nunito', sans-serif; cursor: pointer; }
+    .btn-secondary { flex: 1; padding: 10px; background: #f5f3ff; color: #534AB7; border: 1px solid #CECBF6; border-radius: 8px; font-size: 14px; font-weight: 700; font-family: 'Nunito', sans-serif; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-text">WeLearn</div>
+      <div class="logo-sub">Система оцінювання</div>
+    </div>
+    <div class="section-label">Групи</div>
+    {% for group in groups %}
+    <a href="/group/{{ group.id }}" class="group-btn">
+      <div class="group-icon">{{ group.name[:2] }}</div>
+      {{ group.name }}
+    </a>
+    {% endfor %}
+    <button class="add-group-btn" onclick="document.getElementById('addGroupModal').classList.add('show')">+ Додати групу</button>
+    <div class="sidebar-bottom">
+      <div class="teacher-info">
+        <div class="avatar">{{ user[:2].upper() }}</div>
+        <div class="teacher-name">{{ user }}</div>
+      </div>
+      <a href="/logout" class="logout-btn">Вийти</a>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="welcome">
+      <h1>Вітаємо, {{ user }}!</h1>
+      <p>Оберіть групу зліва щоб почати роботу</p>
+    </div>
+  </div>
+
+  <div class="modal" id="addGroupModal">
+    <div class="modal-card">
+      <h3>Додати групу</h3>
+      <form method="POST" action="/add_group">
+        <input type="text" name="name" placeholder="Назва групи" required>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="document.getElementById('addGroupModal').classList.remove('show')">Скасувати</button>
+          <button type="submit" class="btn-primary">Додати</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

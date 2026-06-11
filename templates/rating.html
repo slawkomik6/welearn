@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WeLearn — Рейтинг</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Nunito', sans-serif; background: #f5f3ff; display: flex; min-height: 100vh; }
+    .sidebar { width: 220px; min-width: 220px; background: #534AB7; display: flex; flex-direction: column; position: fixed; height: 100vh; overflow-y: auto; }
+    .logo { padding: 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.15); }
+    .logo-text { color: #fff; font-size: 22px; font-weight: 800; }
+    .logo-sub { color: rgba(255,255,255,0.6); font-size: 11px; margin-top: 2px; }
+    .section-label { padding: 16px 16px 6px; color: rgba(255,255,255,0.5); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+    .group-btn { display: flex; align-items: center; gap: 10px; padding: 10px 14px; margin: 2px 8px; border-radius: 8px; cursor: pointer; color: rgba(255,255,255,0.85); font-size: 14px; text-decoration: none; transition: background 0.15s; }
+    .group-btn:hover { background: rgba(255,255,255,0.12); }
+    .group-btn.active { background: rgba(255,255,255,0.2); color: #fff; font-weight: 700; }
+    .group-icon { width: 28px; height: 28px; border-radius: 6px; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0; }
+    .sidebar-bottom { margin-top: auto; padding: 16px; border-top: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: space-between; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; font-weight: 700; }
+    .teacher-name { color: rgba(255,255,255,0.9); font-size: 13px; font-weight: 600; }
+    .logout-btn { color: rgba(255,255,255,0.5); font-size: 13px; text-decoration: none; }
+    .main { margin-left: 220px; flex: 1; display: flex; flex-direction: column; }
+    .topbar { background: #fff; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #EEEDFE; }
+    .group-title { font-size: 18px; font-weight: 800; color: #3C3489; }
+    .month-sel { padding: 6px 12px; border-radius: 8px; border: 1px solid #CECBF6; font-size: 13px; color: #534AB7; background: #EEEDFE; font-family: 'Nunito', sans-serif; cursor: pointer; }
+    .tabs { background: #fff; display: flex; padding: 0 24px; border-bottom: 1px solid #EEEDFE; }
+    .tab { padding: 10px 18px; font-size: 14px; cursor: pointer; color: #888; border-bottom: 2px solid transparent; font-weight: 600; text-decoration: none; }
+    .tab.active { color: #534AB7; border-bottom: 2px solid #534AB7; }
+    .content { padding: 24px; flex: 1; }
+    .rating-card { background: #fff; border-radius: 12px; border: 1px solid #EEEDFE; overflow: hidden; }
+    .rating-row { display: flex; align-items: center; padding: 14px 20px; border-bottom: 1px solid #f5f3ff; gap: 16px; }
+    .rating-row:last-child { border-bottom: none; }
+    .rating-row:hover { background: #faf9ff; }
+    .rank { font-size: 20px; font-weight: 800; color: #534AB7; min-width: 36px; text-align: center; }
+    .rank.gold { color: #EF9F27; }
+    .rank.silver { color: #888; }
+    .rank.bronze { color: #BA7517; }
+    .student-name { flex: 1; font-size: 15px; font-weight: 700; color: #3C3489; }
+    .avg-badge { background: #EEEDFE; color: #3C3489; font-size: 16px; font-weight: 800; padding: 6px 16px; border-radius: 8px; }
+    .avg-badge.top { background: #534AB7; color: #fff; }
+    .progress-bar-wrap { flex: 1; background: #f0eeff; border-radius: 20px; height: 8px; overflow: hidden; }
+    .progress-bar { height: 100%; background: #534AB7; border-radius: 20px; transition: width 0.5s; }
+    .test-info { font-size: 12px; color: #888; min-width: 100px; text-align: right; }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-text">WeLearn</div>
+      <div class="logo-sub">Система оцінювання</div>
+    </div>
+    <div class="section-label">Групи</div>
+    {% for g in groups %}
+    <a href="/group/{{ g.id }}" class="group-btn {% if g.id == group.id %}active{% endif %}">
+      <div class="group-icon">{{ g.name[:2] }}</div>
+      {{ g.name }}
+    </a>
+    {% endfor %}
+    <div class="sidebar-bottom">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="avatar">{{ user[:2].upper() }}</div>
+        <div class="teacher-name">{{ user }}</div>
+      </div>
+      <a href="/logout" class="logout-btn">Вийти</a>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="group-title">Рейтинг — {{ group.name }}</div>
+      <select class="month-sel" onchange="window.location='/rating/{{ group.id }}?month='+this.value">
+        {% for m in ['2026-09','2026-08','2026-07','2026-06','2026-05','2026-04','2026-03','2026-02','2026-01'] %}
+        <option value="{{ m }}" {% if m == month %}selected{% endif %}>
+          {{ {'01':'Січень','02':'Лютий','03':'Березень','04':'Квітень','05':'Травень','06':'Червень','07':'Липень','08':'Серпень','09':'Вересень','10':'Жовтень','11':'Листопад','12':'Грудень'}[m.split('-')[1]] }} {{ m.split('-')[0] }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="tabs">
+      <a href="/group/{{ group.id }}?month={{ month }}" class="tab">Журнал оцінок</a>
+      <a href="/rating/{{ group.id }}?month={{ month }}" class="tab active">Рейтинг</a>
+      <a href="/progress/{{ group.id }}" class="tab">Прогрес</a>
+    </div>
+    <div class="content">
+      <div class="rating-card">
+        {% for item in rating %}
+        <div class="rating-row">
+          <div class="rank {% if item.rank == 1 %}gold{% elif item.rank == 2 %}silver{% elif item.rank == 3 %}bronze{% endif %}">
+            {% if item.rank == 1 %}🥇
+            {% elif item.rank == 2 %}🥈
+            {% elif item.rank == 3 %}🥉
+            {% else %}{{ item.rank }}{% endif %}
+          </div>
+          <div class="student-name">{{ item.student.name }}</div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar" style="width: {{ (item.avg / 12 * 100)|round }}%"></div>
+          </div>
+          <div class="test-info">
+            {% for t in item.tests %}{{ t.value|int if t.value == t.value|int else t.value }}/{{ t.max|int if t.max == t.max|int else t.max }}{% if not loop.last %}, {% endif %}{% endfor %}
+          </div>
+          <div class="avg-badge {% if item.rank == 1 %}top{% endif %}">{{ item.avg }}</div>
+        </div>
+        {% endfor %}
+        {% if not rating %}
+        <div style="padding: 40px; text-align: center; color: #888;">Ще немає оцінок за цей місяць</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WeLearn — Адмін</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Nunito', sans-serif; background: #f5f3ff; min-height: 100vh; }
+    .topbar { background: #534AB7; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
+    .logo-text { color: #fff; font-size: 22px; font-weight: 800; }
+    .logout-btn { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 14px; }
+    .content { max-width: 700px; margin: 40px auto; padding: 0 20px; }
+    .page-title { font-size: 24px; font-weight: 800; color: #3C3489; margin-bottom: 24px; }
+    .card { background: #fff; border-radius: 16px; border: 1px solid #EEEDFE; padding: 24px; margin-bottom: 24px; }
+    .card-title { font-size: 16px; font-weight: 800; color: #534AB7; margin-bottom: 16px; }
+    .form-row { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+    input, select { padding: 10px 14px; border: 2px solid #EEEDFE; border-radius: 8px; font-size: 14px; font-family: 'Nunito', sans-serif; outline: none; }
+    input:focus, select:focus { border-color: #534AB7; }
+    .btn-primary { padding: 10px 20px; background: #534AB7; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; font-family: 'Nunito', sans-serif; cursor: pointer; }
+    .btn-primary:hover { background: #3C3489; }
+    .users-list { display: flex; flex-direction: column; gap: 8px; }
+    .user-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #f5f3ff; border-radius: 10px; }
+    .user-info { display: flex; align-items: center; gap: 12px; }
+    .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: #534AB7; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; font-weight: 700; }
+    .user-name { font-size: 15px; font-weight: 700; color: #3C3489; }
+    .user-role { font-size: 12px; color: #888; }
+    .role-badge { padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+    .role-badge.admin { background: #534AB7; color: #fff; }
+    .role-badge.teacher { background: #EEEDFE; color: #534AB7; }
+    .btn-danger { padding: 6px 12px; background: #FCEBEB; color: #A32D2D; border: none; border-radius: 6px; font-size: 12px; font-weight: 700; font-family: 'Nunito', sans-serif; cursor: pointer; }
+    .btn-danger:hover { background: #F7C1C1; }
+    .info-box { background: #EEEDFE; border-radius: 10px; padding: 14px 16px; font-size: 13px; color: #534AB7; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="logo-text">WeLearn — Адмін панель</div>
+    <a href="/logout" class="logout-btn">Вийти</a>
+  </div>
+
+  <div class="content">
+    <div class="page-title">Управління вчителями</div>
+
+    <div class="card">
+      <div class="card-title">Додати користувача</div>
+      <form method="POST" action="/admin/add_user">
+        <div class="form-row">
+          <input type="text" name="username" placeholder="Логін" required style="flex:1">
+          <input type="password" name="password" placeholder="Пароль" required style="flex:1">
+          <select name="role">
+            <option value="teacher">Вчитель</option>
+            <option value="admin">Адмін</option>
+          </select>
+          <button type="submit" class="btn-primary">Додати</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Користувачі системи</div>
+      <div class="info-box">Всього користувачів: {{ users|length }}</div>
+      <div class="users-list">
+        {% for user in users %}
+        <div class="user-row">
+          <div class="user-info">
+            <div class="user-avatar">{{ user.username[:2].upper() }}</div>
+            <div>
+              <div class="user-name">{{ user.username }}</div>
+              <div class="user-role">{{ 'Адміністратор' if user.role == 'admin' else 'Вчитель' }}</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="role-badge {{ user.role }}">{{ user.role }}</span>
+            <button class="btn-danger" onclick="deleteUser('{{ user.id }}', '{{ user.username }}')">Видалити</button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function deleteUser(id, name) {
+      if (confirm('Видалити користувача "' + name + '"?')) {
+        fetch('/admin/delete_user', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({user_id: id})
+        }).then(() => location.reload());
+      }
+    }
+  </script>
+</body>
+</html>

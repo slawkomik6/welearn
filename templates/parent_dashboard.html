@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WeLearn — Оцінки {{ student.name }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Nunito', sans-serif; background: #534AB7; min-height: 100vh; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 24px; }
+    .logo-text { font-size: 28px; font-weight: 800; color: #fff; }
+    .student-name { font-size: 20px; font-weight: 700; color: rgba(255,255,255,0.9); margin-top: 4px; }
+    .month-sel { background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.3); padding: 6px 12px; border-radius: 8px; font-family: 'Nunito', sans-serif; font-size: 13px; margin-top: 8px; cursor: pointer; }
+    .month-sel option { background: #534AB7; }
+    .card { background: #fff; border-radius: 16px; padding: 24px; margin-bottom: 16px; }
+    .card-title { font-size: 16px; font-weight: 800; color: #3C3489; margin-bottom: 16px; }
+    .rating-banner { background: linear-gradient(135deg, #534AB7, #7F77DD); border-radius: 16px; padding: 24px; margin-bottom: 16px; text-align: center; color: #fff; }
+    .rating-rank { font-size: 48px; font-weight: 800; }
+    .rating-total { font-size: 16px; opacity: 0.8; margin-top: 4px; }
+    .rating-label { font-size: 13px; opacity: 0.7; margin-bottom: 8px; }
+    .grades-list { display: flex; flex-direction: column; gap: 8px; }
+    .grade-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #f5f3ff; border-radius: 10px; }
+    .grade-col-name { font-size: 14px; color: #534AB7; font-weight: 600; }
+    .grade-val { font-size: 16px; font-weight: 800; color: #3C3489; }
+    .grade-val.absent { color: #A32D2D; background: #FCEBEB; padding: 2px 8px; border-radius: 6px; font-size: 13px; }
+    .grade-val.test { background: #EEEDFE; padding: 4px 10px; border-radius: 8px; }
+    .comment-text { font-size: 12px; color: #888; margin-top: 4px; }
+    .avg-row { display: flex; align-items: center; justify-content: space-between; padding: 14px; background: #EEEDFE; border-radius: 10px; margin-top: 12px; }
+    .avg-label { font-size: 15px; font-weight: 700; color: #534AB7; }
+    .avg-val { font-size: 22px; font-weight: 800; color: #3C3489; }
+    .logout-btn { display: block; text-align: center; color: rgba(255,255,255,0.7); font-size: 14px; margin-top: 16px; text-decoration: none; }
+    .no-grades { text-align: center; color: #888; padding: 20px; }
+    .trend-badge { font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 8px; }
+    .trend-badge.up { background: #EAF3DE; color: #3B6D11; }
+    .trend-badge.down { background: #FCEBEB; color: #A32D2D; }
+    .trend-badge.same { background: #EEEDFE; color: #534AB7; }
+  </style>
+  <link rel="manifest" href="/static/manifest.json">
+  <meta name="theme-color" content="#534AB7">
+  <link rel="apple-touch-icon" href="/static/icon-192.png">
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/parent' });
+      });
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo-text">WeLearn</div>
+      <div class="student-name">{{ student.name }}</div>
+      <select class="month-sel" onchange="window.location='/parent/dashboard?month='+this.value">
+        {% for m in ['2026-09','2026-08','2026-07','2026-06','2026-05','2026-04','2026-03','2026-02','2026-01'] %}
+        <option value="{{ m }}" {% if m == month %}selected{% endif %}>
+          {{ {'01':'Січень','02':'Лютий','03':'Березень','04':'Квітень','05':'Травень','06':'Червень','07':'Липень','08':'Серпень','09':'Вересень','10':'Жовтень','11':'Листопад','12':'Грудень'}[m.split('-')[1]] }} {{ m.split('-')[0] }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    {% if rating %}
+    <div class="rating-banner">
+      <div class="rating-label">Місце в рейтингу групи</div>
+      <div class="rating-rank">{{ rating.rank }}</div>
+      <div class="rating-total">з {{ rating.total }} учнів</div>
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <div class="card-title">Оцінки за місяць</div>
+      {% if columns %}
+      <div class="grades-list">
+        {% for col in columns %}
+        {% set val = grades.get(col.id, {}).get('value', '') %}
+        {% set comment = grades.get(col.id, {}).get('comment', '') %}
+        <div class="grade-row">
+          <div>
+            <div class="grade-col-name">{{ col.name }}</div>
+            {% if comment %}<div class="comment-text">💬 {{ comment }}</div>{% endif %}
+          </div>
+          {% if val == 'нб' %}
+          <div class="grade-val absent">нб</div>
+          {% elif val %}
+          <div class="grade-val {% if col.type == 'test' %}test{% endif %}">
+            {{ val }}{% if col.type == 'test' %}/{{ col.max_score or 100 }}{% endif %}
+          </div>
+          {% else %}
+          <div class="grade-val" style="color:#ccc">—</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+
+        {% if avg %}
+        <div class="avg-row">
+          <div class="avg-label">Середній бал</div>
+          <div class="avg-val">{{ avg }}</div>
+        </div>
+        {% endif %}
+      </div>
+      {% else %}
+      <div class="no-grades">Немає оцінок за цей місяць</div>
+      {% endif %}
+    </div>
+
+    {% if progress and progress|length > 1 %}
+    <div class="card">
+      <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
+        <span>Прогрес дитини</span>
+        <span class="trend-badge" id="trendBadge"></span>
+      </div>
+      <canvas id="progressChart" height="160"></canvas>
+    </div>
+    {% endif %}
+
+    <a href="/parent" class="logout-btn">← Вийти</a>
+  </div>
+
+  <script>
+    const progressData = {{ progress | tojson }};
+
+    if (progressData && progressData.length > 1) {
+      const labels = progressData.map(p => p.label);
+      const values = progressData.map(p => p.avg);
+
+      const diff = Math.round((values[values.length - 1] - values[values.length - 2]) * 10) / 10;
+      const badge = document.getElementById('trendBadge');
+      if (diff > 0) {
+        badge.textContent = '↑ +' + diff + ' за місяць';
+        badge.classList.add('up');
+      } else if (diff < 0) {
+        badge.textContent = '↓ ' + diff + ' за місяць';
+        badge.classList.add('down');
+      } else {
+        badge.textContent = '→ без змін';
+        badge.classList.add('same');
+      }
+
+      const ctx = document.getElementById('progressChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Середній бал',
+            data: values,
+            borderColor: '#534AB7',
+            backgroundColor: 'rgba(83,74,183,0.1)',
+            borderWidth: 3,
+            tension: 0.3,
+            fill: true,
+            pointBackgroundColor: '#534AB7',
+            pointRadius: 5,
+            pointHoverRadius: 7
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              min: 0,
+              max: 12,
+              ticks: { stepSize: 2 }
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>

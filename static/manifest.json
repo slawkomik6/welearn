@@ -1,0 +1,26 @@
+{
+  "name": "WeLearn — Оцінки дитини",
+  "short_name": "WeLearn",
+  "description": "Перегляд оцінок та рейтингу дитини в школі WeLearn",
+  "start_url": "/parent",
+  "scope": "/parent",
+  "display": "standalone",
+  "background_color": "#534AB7",
+  "theme_color": "#534AB7",
+  "orientation": "portrait",
+  "lang": "uk",
+  "icons": [
+    {
+      "src": "/static/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
