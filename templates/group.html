@@ -173,7 +173,7 @@
                     data-student="{{ student.id }}" data-col="{{ col.id }}">
                   {% endif %}
                   <span class="comment-icon {% if cmt %}has-comment{% endif %}"
-                    onclick="openComment('{{ student.id }}','{{ col.id }}','{{ student.name }}','{{ col.name }}')"
+                    onclick="openComment('{{ student.id }}','{{ col.id }}',this)" data-student-name="{{ student.name }}" data-col-name="{{ col.name }}"
                     title="Коментар">💬</span>
                 </div>
               </td>
@@ -362,11 +362,11 @@
       showSaved();
     }
 
-    function openComment(studentId, colId, studentName, colName) {
+    function openComment(studentId, colId, el) {
       const current = (gradesData[studentId] && gradesData[studentId].scores && gradesData[studentId].scores[colId]) || {};
       document.getElementById('commentStudentId').value = studentId;
       document.getElementById('commentColId').value = colId;
-      document.getElementById('commentTitle').textContent = studentName + ' — ' + colName;
+      document.getElementById('commentTitle').textContent = el.getAttribute('data-student-name') + ' — ' + el.getAttribute('data-col-name');
       document.getElementById('commentInput').value = current.comment || '';
       document.getElementById('commentModal').classList.add('show');
     }
