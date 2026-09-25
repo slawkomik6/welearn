@@ -77,8 +77,7 @@ def group(group_id):
     columns.sort(key=lambda x: x.get("order", 0))
     groups_ref = db.collection("groups").stream()
     groups = [{"id": g.id, **g.to_dict()} for g in groups_ref]
-    return render_template("group.html", group=group, students=students, grades=grades, columns=columns, month=month, groups=groups, user=session["user"])
-
+    return render_template("group.html", group=group, students=students, grades=grades, columns=columns, month=month, groups=groups, user=session["user"], months=get_months_list())
 @app.route("/save_grade", methods=["POST"])
 def save_grade():
     if "user" not in session:
@@ -200,6 +199,21 @@ def calc_scores(columns, scores):
 
 MONTHS_ORDER = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06','2026-07','2026-08','2026-09','2026-10','2026-11','2026-12']
 MONTH_NAMES_SHORT = {'01':'Січ','02':'Лют','03':'Бер','04':'Кві','05':'Тра','06':'Чер','07':'Лип','08':'Сер','09':'Вер','10':'Жов','11':'Лис','12':'Гру'}
+MONTH_NAMES_UA = {'01':'Січень','02':'Лютий','03':'Березень','04':'Квітень','05':'Травень','06':'Червень','07':'Липень','08':'Серпень','09':'Вересень','10':'Жовтень','11':'Листопад','12':'Грудень'}
+
+def get_months_list():
+    from datetime import datetime
+    now = datetime.now()
+    months = []
+    for i in range(18):
+        year = now.year
+        month = now.month - i
+        while month <= 0:
+            month += 12
+            year -= 1
+        m = f"{year}-{month:02d}"
+        months.append(m)
+    return months
 
 def get_student_progress(group_id, student_id):
     progress = []
@@ -249,7 +263,7 @@ def rating(group_id):
         item["rank"] = i + 1
     groups_ref = db.collection("groups").stream()
     groups = [{"id": g.id, **g.to_dict()} for g in groups_ref]
-    return render_template("rating.html", group=group, rating=rating_list, month=month, groups=groups, user=session["user"])
+    return render_template("rating.html", group=group, rating=rating_list, month=month, groups=groups, user=session["user"], months=get_months_list())
 
 @app.route("/progress/<group_id>")
 def progress_page(group_id):
@@ -265,7 +279,7 @@ def progress_page(group_id):
     progress_data = get_student_progress(group_id, selected_id) if selected_id else []
     groups_ref = db.collection("groups").stream()
     groups = [{"id": g.id, **g.to_dict()} for g in groups_ref]
-    return render_template("progress.html", group=group, students=students, selected_id=selected_id, progress=progress_data, groups=groups, user=session["user"])
+    return render_template("progress.html", group=group, students=students, selected_id=selected_id, progress=progress_data, groups=groups, user=session["user"], months=get_months_list())
 
 # ======= БАТЬКИ =======
 
@@ -322,7 +336,9 @@ def parent_dashboard():
             rating_data = {"rank": i + 1, "total": len(avgs)}
     own_avg, _ = calc_scores(columns, grades)
     progress_data = get_student_progress(student["group_id"], student["id"])
-    return render_template("parent_dashboard.html", student=student, grades=grades, columns=columns, month=month, rating=rating_data, avg=own_avg, progress=progress_data)
+        unread_ref = db.collection("notifications").where("student_id", "==", student["id"]).where("read", "==", False).stream()
+    unread_count = len(list(unread_ref))
+    return render_template("parent_dashboard.html", student=student, grades=grades, columns=columns, month=month, rating=rating_data, avg=own_avg, progress=progress_data, unread_count=unread_count, months=get_months_list())
 
 # ======= АДМІН =======
 
