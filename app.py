@@ -336,7 +336,7 @@ def parent_dashboard():
             rating_data = {"rank": i + 1, "total": len(avgs)}
     own_avg, _ = calc_scores(columns, grades)
     progress_data = get_student_progress(student["group_id"], student["id"])
-        unread_ref = db.collection("notifications").where("student_id", "==", student["id"]).where("read", "==", False).stream()
+    unread_ref = db.collection("notifications").where("student_id", "==", student["id"]).where("read", "==", False).stream()
     unread_count = len(list(unread_ref))
     return render_template("parent_dashboard.html", student=student, grades=grades, columns=columns, month=month, rating=rating_data, avg=own_avg, progress=progress_data, unread_count=unread_count, months=get_months_list())
 
